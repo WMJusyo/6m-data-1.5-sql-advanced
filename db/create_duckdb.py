@@ -1,6 +1,6 @@
 import duckdb
 
-con = duckdb.connect("db/unit-1-5.db")
+con = duckdb.connect("unit-1-5.db")
 
 con.sql(
     """
