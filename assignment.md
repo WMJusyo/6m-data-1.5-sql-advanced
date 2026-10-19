@@ -16,6 +16,13 @@ Answer:
 
 ```sql
 
+SELECT
+cl.id, cl.claim_date, cl.travel_time, cl.claim_amt, c.car_type, c.car_use,
+FROM claim cl
+INNER JOIN car c ON cl.car_id = c.id;
+
+
+
 ```
 
 ### Question 2
@@ -26,6 +33,11 @@ Answer:
 
 ```sql
 
+SELECT
+id, car_id, travel_time,
+SUM (travel_time) OVER (ORDER BY id) AS running_total
+FROM claim 
+
 ```
 
 ### Question 3
@@ -35,6 +47,18 @@ Using a Common Table Expression (CTE), write a SQL query to return a table conta
 Answer:
 
 ```sql
+
+WITH avg_resale_value AS(
+SELECT AVG(resale_value) AS avg_resale_value 
+  FROM car
+)
+SELECT
+id, resale_value, car_use
+FROM car
+WHERE resale_value < (SELECT avg_resale_value FROM avg_resale_value)
+;
+
+
 
 ```
 
@@ -56,7 +80,7 @@ Answer:
 
 Before writing any CTEs, answer these questions by running simple queries:
 
-- How many unique `car_type` values are in the `car` table? (`SELECT DISTINCT car_type FROM car`)
+- How many unique `car_type` values are in the `car` table? (`SELECT DISTINCT car_type FROM car`): 
 - How many unique `state` values are in the `address` table?
 - Do all clients have an address? (`SELECT COUNT(*) FROM client LEFT JOIN address ON client.address_id = address.id WHERE address.id IS NULL`)
 
@@ -64,6 +88,15 @@ Write those queries here:
 
 ```sql
 -- Your exploration queries
+`SELECT COUNT(DISTINCT car_type) FROM car`: **6**
+
+`SELECT COUNT(DISTINCT state) FROM address`: **49**
+
+`SELECT COUNT(*) FROM client 
+LEFT JOIN address ON client.address_id = address.id 
+WHERE address.id IS NULL` : **NONE**
+
+
 ```
 
 ---
@@ -76,6 +109,13 @@ Write a query (no CTE yet) that joins `claim` and `car`, and adds a column `avg_
 
 ```sql
 -- Step 2: Your query here
+
+SELECT
+c.id, cl.claim_amt, c.car_type, AVG(cl.claim_amt) OVER (PARTITION BY car_type) AS avg_claim_by_car_type
+FROM car c
+join claim cl ON cl.car_id = c.id
+
+
 ```
 
 <details>
@@ -108,7 +148,10 @@ Wrap your Step 2 query in a CTE called `market_comparison`, then write a second 
 ```sql
 -- Step 3: Your query here
 WITH market_comparison AS (
-    -- paste Step 2 query here
+    SELECT
+c.id, cl.client_id, cl.claim_amt, c.car_type, AVG(cl.claim_amt) OVER (PARTITION BY car_type) AS avg_claim_by_car_type
+FROM car c
+join claim cl ON cl.car_id = c.id
 ),
 client_totals AS (
     SELECT client_id, SUM(claim_amt) AS total_claimed
